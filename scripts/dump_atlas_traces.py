@@ -1,6 +1,4 @@
 import requests, ujson, time, sys, io, unicodedata, math, time
-from ripe.atlas.sagan import Result
-from ripe.atlas.sagan.traceroute import TracerouteResult, Hop, Packet
 import pyasn
 from itertools import groupby
 import datetime
