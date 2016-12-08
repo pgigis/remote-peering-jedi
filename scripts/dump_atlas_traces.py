@@ -18,7 +18,7 @@ class TraceAtlas:
         # load the ip to asn mapping
         start_time = sys.argv[2]
         stop_time = sys.argv[3]
-        initial_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__gte=" + start_time + "&stop_time__lte=" + stop_time + "&af=4&page_size=500&id__gt=4715973"
+        initial_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__gte=" + start_time + "&stop_time__lte=" + stop_time + "&af=4&page_size=500"
         print initial_query
         response = requests.get(initial_query)
         decoded_response = response.json()
