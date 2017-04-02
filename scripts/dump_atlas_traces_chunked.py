@@ -1,7 +1,6 @@
 import requests, ujson, time, sys, io, unicodedata, math, time
 from ripe.atlas.sagan import Result
 from ripe.atlas.sagan.traceroute import TracerouteResult, Hop, Packet
-import pyasn
 from itertools import groupby
 import datetime
 from pprint import pprint
@@ -20,7 +19,7 @@ class TraceAtlas:
         # load the ip to asn mapping
         start_time = sys.argv[2]
         stop_time = sys.argv[3]
-        initial_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__gte=" + start_time + "&stop_time__lte=" + stop_time + "&af=4&page_size=500"
+        initial_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__gte=" + start_time + "&start_time__lte=" + stop_time + "&af=4&page_size=500"
         print initial_query
         response = requests.get(initial_query)
         decoded_response = response.json()
@@ -73,7 +72,7 @@ class TraceAtlas:
                 decoded_response = response.json()
             else:
                 if last_ts != previous_last_ts:
-                    next_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?stop_time__lte=" + stop_time + "&af=4&page_size=500&id__gt=" + str(
+                    next_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__lte=" + stop_time + "&af=4&page_size=500&id__gt=" + str(
                         last_id)
                     print next_query
                     response = requests.get(next_query)
