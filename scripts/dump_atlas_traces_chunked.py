@@ -1,16 +1,8 @@
-import requests, ujson, time, sys, io, unicodedata, math, time
-from ripe.atlas.sagan import Result
-from ripe.atlas.sagan.traceroute import TracerouteResult, Hop, Packet
-from itertools import groupby
-import datetime
-from pprint import pprint
-
+import sys,ujson
+from urllib2 import urlopen
 
 class TraceAtlas:
     def __init__(self):
-        self.all_paths = set()
-        self.as_path_file = ""
-        self.apfh = None
         self.traces_fh = None
 
     def parse_measurement(self):
@@ -21,8 +13,8 @@ class TraceAtlas:
         stop_time = sys.argv[3]
         initial_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__gte=" + start_time + "&start_time__lte=" + stop_time + "&af=4&page_size=500"
         print initial_query
-        response = requests.get(initial_query)
-        decoded_response = response.json()
+        response = urlopen(initial_query).read()
+        decoded_response = ujson.loads(response)
 
         last_ts = ""
         previous_last_ts = ""
@@ -36,47 +28,30 @@ class TraceAtlas:
                 result_url = msm_object["result"]
                 last_id = msm_object["id"]
                 try:
-                    participant_count = msm_object["participant_count"]
-                    if participant_count > 1000:
-                        print "!!! %s " % result_url
-                        # get the list of probes
-                        probe_list_url = "https://atlas.ripe.net/api/v2/measurements/%s/?optional_fields=probes" % \
-                                         msm_object["id"]
-                        probe_list = requests.get(probe_list_url)
-                        probe_list_decoded = probe_list.json()
-                        probes = list()
-                        for probe in probe_list_decoded["probes"]:
-                            probes.append(str(probe["id"]))
-                            if len(probes) >= 100:
-                                probes_str = ','.join(probes)
-                                results = requests.get("%s?probe_ids=%s" % (result_url, probes_str))
-                                print "%s?probe_ids=%s" % (result_url, probes_str)
-                                self.traces_fh.write("%s\n" % results.text)
-                                probes = list()
-                        probes_str = ','.join(probes)
-                        results = requests.get("%s?probe_ids=%s" % (result_url, probes_str))
-                        print "%s?probe_ids=%s" % (result_url, probes_str)
-                        self.traces_fh.write("%s\n" % results.text)
-                    else:
-                        results = requests.get(result_url)
-                        print result_url
-                        self.traces_fh.write("%s\n" % results.text)
-
+                    print result_url
+                    response = urlopen(result_url)
+                    CHUNK = 16 * 1024
+                    while True:
+                        chunk = response.read(CHUNK)
+                        if not chunk:
+                            self.traces_fh.write("\n")
+                            break
+                        self.traces_fh.write(chunk)
 
                 except Exception, e:
                     print "error: " + str(e)
             if 'next' in decoded_response and decoded_response['next'] is not None:
                 next_query = decoded_response['next']
                 print next_query
-                response = requests.get(next_query)
-                decoded_response = response.json()
+                response = urlopen(next_query).read()
+                decoded_response = ujson.loads(response)
             else:
                 if last_ts != previous_last_ts:
                     next_query = "https://atlas.ripe.net/api/v2/measurements/traceroute/?start_time__lte=" + stop_time + "&af=4&page_size=500&id__gt=" + str(
                         last_id)
                     print next_query
-                    response = requests.get(next_query)
-                    decoded_response = response.json()
+                    response = urlopen(next_query).read()
+                    decoded_response = ujson.loads(response)
                     previous_last_ts = last_ts
                 else:
                     break
